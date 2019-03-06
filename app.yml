@@ -1,0 +1,70 @@
+---
+ - hosts: all
+   become: true
+   remote_user: ubuntu
+   vars:
+    NODEJS_VERSION: 10
+   
+   tasks:
+    - name: Update caches respository
+      apt:
+        update_cache: yes
+
+    - name: Updating and installing core packages
+      apt:
+        name: "{{ packages }}"
+      vars:
+        packages:
+        - make 
+        - g++ 
+        - git
+        - curl 
+        - vim 
+        - libcairo2-dev 
+        - libav-tools 
+        - nfs-common
+        - portmap
+
+    - name: Add gpg key for NodeJS LTS
+      apt_key:
+        url: "https://deb.nodesource.com/gpgkey/nodesource.gpg.key"
+        state: present
+
+    - name: Install the NodeJS LTS repo
+      apt_repository:
+        repo: "deb https://deb.nodesource.com/node_{{ NODEJS_VERSION }}.x {{ ansible_distribution_release }} main"
+        state: present
+        update_cache: yes
+
+    - name: Install Node.js
+      apt:  
+        name: nodejs
+        state: present
+
+    - name: delete folder if exit
+      file:
+       path: selene-ah-frontend
+       state: absent
+      
+
+    - name: Clone the application repo
+      git:
+       repo: https://github.com/andela/selene-ah-frontend.git
+       dest: "/home/ubuntu/selene-ah-frontend"
+
+    - name: Installing checkout branch
+      shell: | 
+       cd /home/ubuntu/selene-ah-frontend
+       sudo git checkout aws-deploy
+       npm install -ES --unsafe-perm=true
+      
+    - name: Build project
+      shell: |
+       cd /home/ubuntu/selene-ah-frontend
+       npm run build
+       
+       
+
+    
+
+    
